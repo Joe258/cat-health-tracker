@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐾 毛孩健康日誌</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream:    #FDF8F2;
+      --orange:   #E8845A;
+      --orange-d: #C96A3E;
+      --caramel:  #C4956A;
+      --brown:    #3D2B1F;
+      --brown-lt: #7A5C44;
+      --good:     #6BAE75;
+      --good-d:   #4E9158;
+      --mid:      #E0A040;
+      --mid-d:    #C07E20;
+      --bad:      #D96060;
+      --bad-d:    #B84040;
+      --card:     #FFFFFF;
+      --shadow:   rgba(61,43,31,0.10);
+      --radius:   18px;
+      --radius-sm:10px;
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--cream);
+      color: var(--brown);
+      min-height: 100vh;
+      padding-bottom: 48px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #E8845A 0%, #C96A3E 60%, #a8562e 100%);
+      padding: 28px 20px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      bottom: -18px; left: 0; right: 0;
+      height: 36px;
+      background: var(--cream);
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    }
+
+    /* gear button in header top-right */
+    .gear-btn {
+      position: absolute;
+      top: 14px; right: 14px;
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.3s;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 10;
+    }
+    .gear-btn:hover { background: rgba(255,255,255,0.35); }
+    .gear-btn.open { transform: rotate(60deg); background: rgba(255,255,255,0.40); }
+
+    .header-cat { display: block; margin: 0 auto 12px; width: 110px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.18)); }
+    header h1 { font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: 0.04em; text-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    header p.subtitle { margin-top: 4px; font-size: 0.82rem; color: rgba(255,255,255,0.85); letter-spacing: 0.06em; }
+
+    /* ── SETTINGS DRAWER ── */
+    .settings-drawer {
+      max-width: 540px;
+      margin: 0 auto;
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1);
+    }
+    .settings-drawer.open { max-height: 900px; }
+
+    .settings-inner {
+      background: #2C1D13;
+      padding: 20px 18px 22px;
+      border-radius: 0 0 var(--radius) var(--radius);
+      margin: 0 16px;
+    }
+    .settings-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: #C4956A;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .settings-title::after { content: ''; flex:1; height:1px; background: #4A3020; }
+
+    .settings-note {
+      font-size: 0.76rem;
+      color: #A08060;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      border-left: 3px solid #C4956A;
+    }
+
+    .s-field { margin-bottom: 12px; }
+    .s-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #C4956A;
+      letter-spacing: 0.08em;
+      margin-bottom: 5px;
+    }
+    .s-input {
+      width: 100%;
+      background: #1A1008;
+      border: 1.5px solid #4A3020;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      color: #F0C890;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .s-input:focus { border-color: #C4956A; }
+    .s-input::placeholder { color: #6A4830; }
+
+    .s-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .s-save-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #C4956A, #9A6E42);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+      transition: opacity 0.2s;
+    }
+    .s-save-btn:active { opacity: 0.8; }
+
+    .s-status {
+      text-align: center;
+      font-size: 0.75rem;
+      margin-top: 10px;
+      min-height: 18px;
+      color: #6BAE75;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .s-status.warn { color: #E0A040; }
+
+    .s-clear-btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      background: transparent;
+      border: 1px solid #4A3020;
+      border-radius: 8px;
+      padding: 8px;
+      font-family: inherit;
+      font-size: 0.72rem;
+      color: #6A4830;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .s-clear-btn:hover { color: #D96060; border-color: #D96060; }
+
+    /* ── NAV TABS ── */
+    .nav-tabs {
+      display: flex;
+      max-width: 540px;
+      margin: 20px auto 0;
+      padding: 0 16px;
+      gap: 8px;
+    }
+    .nav-tab {
+      flex: 1;
+      border: 2px solid #EDD9C5;
+      border-radius: 50px;
+      padding: 10px 6px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--card);
+      color: var(--brown-lt);
+      transition: all 0.18s;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-tab.active {
+      background: var(--orange);
+      border-color: var(--orange-d);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(200,90,40,0.28);
+    }
+
+    /* ── PANELS ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── MAIN ── */
+    main { max-width: 540px; margin: 0 auto; padding: 20px 16px 0; }
+
+    /* ── ALERT CARD ── */
+    .alert-card {
+      background: #FFF8ED;
+      border: 2px solid #E0A040;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 22px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .alert-icon { font-size: 1.6rem; flex-shrink: 0; line-height: 1; }
+    .alert-card p { font-size: 0.83rem; line-height: 1.65; color: #7A5020; }
+    .alert-card strong { color: #9E4A10; }
+
+    /* ── DANGER ALERT ── */
+    .danger-alert {
+      background: #FFF0F0;
+      border: 2px solid var(--bad);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .danger-alert.show { display: flex; gap: 10px; align-items: flex-start; }
+    .danger-alert p { font-size: 0.83rem; line-height: 1.6; color: #7A1010; }
+    .danger-alert strong { color: var(--bad-d); }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 3px 18px var(--shadow);
+      padding: 22px 20px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--caramel);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .card-title::after { content: ''; flex: 1; height: 1px; background: #F0E4D4; }
+
+    /* ── FORM ── */
+    label.field-label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--brown-lt); margin-bottom: 6px; }
+    input[type="date"], input[type="number"], textarea {
+      width: 100%; border: 2px solid #EDD9C5; border-radius: var(--radius-sm);
+      padding: 13px 15px; font-family: inherit; font-size: 1rem;
+      color: var(--brown); background: var(--cream);
+      transition: border-color 0.2s; outline: none; -webkit-appearance: none;
+    }
+    input[type="date"]:focus, input[type="number"]:focus, textarea:focus {
+      border-color: var(--orange); background: #fff;
+    }
+    .weight-wrap { position: relative; }
+    .weight-wrap input { padding-right: 50px; }
+    .weight-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.88rem; font-weight: 700; color: var(--caramel); pointer-events: none; }
+    textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
+    .field-wrap { margin-bottom: 18px; }
+    .field-wrap:last-child { margin-bottom: 0; }
+
+    /* ── TOGGLE BUTTONS ── */
+    .toggle-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .toggle-btn {
+      border: 2.5px solid #EDD9C5; border-radius: 14px; padding: 14px 6px;
+      font-family: inherit; font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; background: var(--cream); color: var(--brown-lt);
+      transition: all 0.18s ease; text-align: center;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+    .toggle-btn .btn-emoji { display: block; font-size: 1.5rem; margin-bottom: 4px; }
+    .toggle-btn:active { transform: scale(0.95); }
+    .toggle-btn.good.active { background: var(--good);  border-color: var(--good-d); color: #fff; }
+    .toggle-btn.mid.active  { background: var(--mid);   border-color: var(--mid-d);  color: #fff; }
+    .toggle-btn.bad.active  { background: var(--bad);   border-color: var(--bad-d);  color: #fff; }
+
+    /* ── SUBMIT ── */
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--orange) 0%, var(--orange-d) 100%);
+      color: #fff; border: none; border-radius: var(--radius); padding: 18px;
+      font-family: inherit; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+      letter-spacing: 0.05em; box-shadow: 0 6px 20px rgba(200,90,40,0.35);
+      transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .submit-btn:active { transform: translateY(2px); box-shadow: 0 2px 8px rgba(200,90,40,0.25); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--brown); color: #fff; border-radius: 50px;
+      padding: 13px 26px; font-size: 0.92rem; font-weight: 700;
+      white-space: nowrap; box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+      z-index: 999; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--bad-d); }
+
+    /* ── HISTORY ── */
+    .history-empty { text-align: center; color: #C4A88A; font-size: 0.88rem; padding: 20px 0 6px; }
+    .history-item { border: 1.5px solid #F0E4D4; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 12px; background: var(--cream); }
+    .history-item:last-child { margin-bottom: 0; }
+    .history-date { font-size: 0.78rem; font-weight: 700; color: var(--caramel); letter-spacing: 0.08em; margin-bottom: 8px; }
+    .history-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+    .tag { font-size: 0.75rem; font-weight: 700; border-radius: 20px; padding: 3px 10px; background: #F0E4D4; color: var(--brown-lt); }
+    .tag.good { background: #D4EDD8; color: #2E6B36; }
+    .tag.mid  { background: #FAE9C2; color: #7A5010; }
+    .tag.bad  { background: #F5D4D4; color: #8A2020; }
+    .history-note { font-size: 0.8rem; color: var(--brown-lt); line-height: 1.5; margin-top: 4px; white-space: pre-wrap; }
+
+    /* ── CHARTS ── */
+    .chart-wrap { position: relative; width: 100%; }
+    canvas { display: block; width: 100% !important; border-radius: 8px; }
+    .stat-row { display: flex; gap: 10px; margin-bottom: 18px; }
+    .stat-box { flex: 1; border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; background: var(--cream); border: 1.5px solid #EDD9C5; }
+    .stat-box .s-val { font-size: 1.15rem; font-weight: 700; color: var(--brown); line-height: 1; margin-bottom: 4px; }
+    .stat-box .s-lbl { font-size: 0.7rem; color: var(--brown-lt); letter-spacing: 0.05em; }
+    .stat-box.warn .s-val { color: var(--bad-d); }
+    .stat-box.ok   .s-val { color: var(--good-d); }
+    .hm-legend { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 0.72rem; color: var(--brown-lt); flex-wrap: wrap; }
+    .hm-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+    .range-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .range-btn {
+      flex: 1; border: 1.5px solid #EDD9C5; border-radius: 50px;
+      padding: 7px 4px; font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; background: var(--cream); color: var(--brown-lt);
+      transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .range-btn.active { background: var(--caramel); border-color: var(--caramel); color: #fff; }
+    .section-divider { text-align: center; font-size: 0.75rem; color: #C4A88A; margin: 4px 0 14px; letter-spacing: 0.08em; }
+
+    /* ── SYNC INDICATOR ── */
+    .sync-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px;
+      margin-bottom: 16px;
+      background: #F0E4D4; color: var(--brown-lt);
+    }
+    .sync-badge.on  { background: #D4EDD8; color: #2E6B36; }
+    .sync-badge.off { background: #F5D4D4; color: #8A2020; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+    .paws { position: fixed; bottom: 0; right: 0; width: 90px; opacity: 0.06; pointer-events: none; }
+    footer { text-align: center; margin-top: 24px; font-size: 0.76rem; color: #C4A88A; padding-bottom: 10px; }
+
+    @media (min-width: 400px) {
+      header h1 { font-size: 1.85rem; }
+      .header-cat { width: 128px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <button class="gear-btn" id="gear-btn" title="連動設定" aria-label="開啟設定">⚙️</button>
+
+  <svg class="header-cat" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="60" cy="80" rx="34" ry="28" fill="#fff" fill-opacity="0.92"/>
+    <ellipse cx="60" cy="50" rx="30" ry="27" fill="#fff" fill-opacity="0.92"/>
+    <polygon points="34,28 24,8 44,22" fill="#fff" fill-opacity="0.92"/>
+    <polygon points="86,28 96,8 76,22" fill="#fff" fill-opacity="0.92"/>
+    <polygon points="34,26 27,12 41,22" fill="#F9C4A8" fill-opacity="0.85"/>
+    <polygon points="86,26 93,12 79,22" fill="#F9C4A8" fill-opacity="0.85"/>
+    <ellipse cx="48" cy="47" rx="6" ry="7" fill="#3D2B1F"/>
+    <ellipse cx="72" cy="47" rx="6" ry="7" fill="#3D2B1F"/>
+    <circle cx="50" cy="44" r="2.2" fill="#fff"/>
+    <circle cx="74" cy="44" r="2.2" fill="#fff"/>
+    <ellipse cx="60" cy="57" rx="3" ry="2.2" fill="#E8845A"/>
+    <path d="M60 59.2 Q55 63 52 61" stroke="#7A5C44" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M60 59.2 Q65 63 68 61" stroke="#7A5C44" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <line x1="30" y1="56" x2="50" y2="58" stroke="#C4956A" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="29" y1="60" x2="49" y2="60" stroke="#C4956A" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="30" y1="64" x2="50" y2="62" stroke="#C4956A" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="90" y1="56" x2="70" y2="58" stroke="#C4956A" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="91" y1="60" x2="71" y2="60" stroke="#C4956A" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="90" y1="64" x2="70" y2="62" stroke="#C4956A" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M94 90 Q110 78 106 66 Q102 58 94 64" stroke="#E8C8A8" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <ellipse cx="44" cy="104" rx="11" ry="8" fill="#fff" fill-opacity="0.88"/>
+    <ellipse cx="76" cy="104" rx="11" ry="8" fill="#fff" fill-opacity="0.88"/>
+    <ellipse cx="60" cy="85" rx="12" ry="14" fill="#F9C4A8" fill-opacity="0.40"/>
+    <path d="M57 83 Q60 80 63 83 Q66 86 60 90 Q54 86 57 83Z" fill="#E8845A" fill-opacity="0.7"/>
+  </svg>
+  <h1>🐾 毛孩健康日誌</h1>
+  <p class="subtitle">高齡貓咪每日健康追蹤</p>
+</header>
+
+<!-- ── SETTINGS DRAWER ── -->
+<div class="settings-drawer" id="settings-drawer">
+  <div class="settings-inner">
+    <div class="settings-title">⚙️ Google 表單連動設定</div>
+
+    <div class="settings-note">
+      🔒 以下設定僅儲存在<strong style="color:#C4956A">您的瀏覽器本機</strong>（localStorage），不會寫入程式碼或上傳至 GitHub。<br>
+      換裝置或清除瀏覽器資料後需重新填寫。
+    </div>
+
+    <div class="s-field">
+      <label class="s-label">Google 表單回應網址 (formResponse URL)</label>
+      <input class="s-input" id="cfg-url" type="url"
+        placeholder="https://docs.google.com/forms/d/e/…/formResponse" />
+    </div>
+
+    <div class="settings-title" style="margin-top:4px;">Entry ID 對應</div>
+
+    <div class="s-field">
+      <label class="s-label">日期（共用前綴，如 entry.1273739761）</label>
+      <input class="s-input" id="cfg-date" type="text" placeholder="entry.XXXXXXXXXX" />
+      <div style="font-size:0.7rem;color:#6A4830;margin-top:4px;">
+        程式會自動補上 _year / _month / _day
+      </div>
+    </div>
+
+    <div class="s-grid">
+      <div class="s-field">
+        <label class="s-label">體重</label>
+        <input class="s-input" id="cfg-weight" type="text" placeholder="entry.XXXXXXXXXX" />
+      </div>
+      <div class="s-field">
+        <label class="s-label">食慾</label>
+        <input class="s-input" id="cfg-appetite" type="text" placeholder="entry.XXXXXXXXXX" />
+      </div>
+      <div class="s-field">
+        <label class="s-label">精神</label>
+        <input class="s-input" id="cfg-spirit" type="text" placeholder="entry.XXXXXXXXXX" />
+      </div>
+      <div class="s-field">
+        <label class="s-label">排便</label>
+        <input class="s-input" id="cfg-litter" type="text" placeholder="entry.XXXXXXXXXX" />
+      </div>
+    </div>
+
+    <div class="s-field">
+      <label class="s-label">備忘錄</label>
+      <input class="s-input" id="cfg-note" type="text" placeholder="entry.XXXXXXXXXX" />
+    </div>
+
+    <button class="s-save-btn" id="cfg-save-btn">💾 儲存設定至本機</button>
+    <div class="s-status" id="cfg-status"></div>
+    <button class="s-clear-btn" id="cfg-clear-btn">🗑 清除已儲存的設定</button>
+  </div>
+</div>
+
+<!-- ── NAV TABS ── -->
+<div class="nav-tabs">
+  <button class="nav-tab active" data-panel="panel-record">📝 記錄</button>
+  <button class="nav-tab" data-panel="panel-chart">📊 圖表</button>
+  <button class="nav-tab" data-panel="panel-history">📋 歷史</button>
+</div>
+
+<main>
+
+  <!-- ════ PANEL: RECORD ════ -->
+  <div class="panel active" id="panel-record">
+
+    <!-- sync status badge -->
+    <div id="sync-badge" class="sync-badge off">
+      <div class="sync-dot"></div>
+      <span id="sync-label">Google 表單未連動</span>
+    </div>
+
+    <div class="alert-card">
+      <span class="alert-icon">⚠️</span>
+      <p><strong>老貓照護重點：</strong><br>
+        體重若在短期內<strong>連續下降超過 5%</strong>，或<strong>食慾連續不佳</strong>，
+        請務必諮詢獸醫。老貓新陳代謝慢，早期發現異常至關重要。
+      </p>
+    </div>
+
+    <div class="danger-alert" id="danger-alert">
+      <span class="alert-icon">🚨</span>
+      <p id="danger-text"></p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 今日紀錄</div>
+
+      <div class="field-wrap">
+        <label class="field-label" for="rec-date">日期</label>
+        <input type="date" id="rec-date" />
+      </div>
+
+      <div class="field-wrap">
+        <label class="field-label" for="rec-weight">體重</label>
+        <div class="weight-wrap">
+          <input type="number" id="rec-weight" placeholder="例如：4150" min="0" step="1" inputmode="numeric" />
+          <span class="weight-unit">g</span>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="field-label">食慾</label>
+        <div class="toggle-group" data-group="appetite">
+          <button class="toggle-btn good" data-value="良好" data-group="appetite" type="button"><span class="btn-emoji">😋</span>良好</button>
+          <button class="toggle-btn mid"  data-value="普通" data-group="appetite" type="button"><span class="btn-emoji">😐</span>普通</button>
+          <button class="toggle-btn bad"  data-value="不佳" data-group="appetite" type="button"><span class="btn-emoji">😿</span>不佳</button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="field-label">精神</label>
+        <div class="toggle-group" data-group="spirit">
+          <button class="toggle-btn good" data-value="良好" data-group="spirit" type="button"><span class="btn-emoji">😺</span>良好</button>
+          <button class="toggle-btn mid"  data-value="普通" data-group="spirit" type="button"><span class="btn-emoji">🐱</span>普通</button>
+          <button class="toggle-btn bad"  data-value="不佳" data-group="spirit" type="button"><span class="btn-emoji">😾</span>不佳</button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="field-label">排便</label>
+        <div class="toggle-group" data-group="litter">
+          <button class="toggle-btn good" data-value="良好" data-group="litter" type="button"><span class="btn-emoji">✅</span>良好</button>
+          <button class="toggle-btn mid"  data-value="普通" data-group="litter" type="button"><span class="btn-emoji">⚠️</span>普通</button>
+          <button class="toggle-btn bad"  data-value="不佳" data-group="litter" type="button"><span class="btn-emoji">❌</span>不佳</button>
+        </div>
+      </div>
+
+      <div class="field-wrap">
+        <label class="field-label" for="rec-note">備忘錄</label>
+        <textarea id="rec-note" placeholder="今天有沒有特別的事情？例如：就診、換糧、行為異常…"></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" type="button">
+      <span>🐾</span> 儲存今日紀錄
+    </button>
+  </div>
+
+  <!-- ════ PANEL: CHARTS ════ -->
+  <div class="panel" id="panel-chart">
+
+    <div class="card">
+      <div class="card-title">⚖️ 體重趨勢</div>
+      <div class="range-row">
+        <button class="range-btn active" data-range="14">14天</button>
+        <button class="range-btn" data-range="30">30天</button>
+        <button class="range-btn" data-range="60">60天</button>
+        <button class="range-btn" data-range="0">全部</button>
+      </div>
+      <div class="stat-row" id="weight-stats"></div>
+      <div class="chart-wrap"><canvas id="weight-chart" height="200"></canvas></div>
+      <p style="font-size:0.72rem;color:#C4A88A;margin-top:8px;text-align:center;">紅色警示帶 = 相較最高點下降 ≥ 5%</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🌡️ 狀態熱力圖（近 30 天）</div>
+      <div class="hm-legend">
+        <div class="hm-swatch" style="background:#6BAE75"></div>良好
+        <div class="hm-swatch" style="background:#E0A040;margin-left:8px"></div>普通
+        <div class="hm-swatch" style="background:#D96060;margin-left:8px"></div>不佳
+        <div class="hm-swatch" style="background:#EADED4;margin-left:8px"></div>無紀錄
+      </div>
+      <div class="chart-wrap"><canvas id="heatmap-chart" height="130"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 狀態週統計（近 4 週）</div>
+      <div class="chart-wrap"><canvas id="bar-chart" height="200"></canvas></div>
+      <p style="font-size:0.72rem;color:#C4A88A;margin-top:8px;text-align:center;">每週「不佳」次數，連續升高請留意</p>
+    </div>
+
+  </div>
+
+  <!-- ════ PANEL: HISTORY ════ -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <div class="card-title">📋 本機歷史紀錄</div>
+      <p class="section-divider">最近 20 筆（儲存於此裝置）</p>
+      <div id="history-list">
+        <p class="history-empty">尚無紀錄，快來記下第一筆吧 🐾</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>Made with 🧡 for senior cats &nbsp;·&nbsp; 表單設定存於本機，不公開</footer>
+
+<svg class="paws" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <circle cx="30" cy="20" r="10" fill="#E8845A"/>
+  <circle cx="55" cy="14" r="8" fill="#E8845A"/>
+  <circle cx="76" cy="22" r="9" fill="#E8845A"/>
+  <ellipse cx="53" cy="50" rx="22" ry="18" fill="#E8845A"/>
+  <circle cx="25" cy="80" r="9" fill="#E8845A"/>
+  <circle cx="50" cy="74" r="7" fill="#E8845A"/>
+  <circle cx="72" cy="82" r="8" fill="#E8845A"/>
+  <ellipse cx="48" cy="108" rx="20" ry="16" fill="#E8845A"/>
+</svg>
+
+<div class="toast" id="toast"></div>
+<iframe name="hidden-iframe" style="display:none;"></iframe>
+
+<script>
+/* ══════════════════════════════════════════════
+   SETTINGS — 從 localStorage 讀寫，程式碼無硬碼
+══════════════════════════════════════════════ */
+const CFG_KEY = 'cat_form_config';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function saveConfig(cfg) {
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+function isConfigReady() {
+  const c = loadConfig();
+  return !!(c.url && c.date && c.weight && c.appetite && c.spirit && c.litter && c.note);
+}
+
+/* ── 設定表單讀入 ── */
+function populateSettingsForm() {
+  const c = loadConfig();
+  document.getElementById('cfg-url').value      = c.url      || '';
+  document.getElementById('cfg-date').value     = c.date     || '';
+  document.getElementById('cfg-weight').value   = c.weight   || '';
+  document.getElementById('cfg-appetite').value = c.appetite || '';
+  document.getElementById('cfg-spirit').value   = c.spirit   || '';
+  document.getElementById('cfg-litter').value   = c.litter   || '';
+  document.getElementById('cfg-note').value     = c.note     || '';
+}
+
+/* ── 同步狀態 badge ── */
+function updateSyncBadge() {
+  const badge = document.getElementById('sync-badge');
+  const label = document.getElementById('sync-label');
+  if (isConfigReady()) {
+    badge.className = 'sync-badge on';
+    label.textContent = 'Google 表單已連動 ✓';
+  } else {
+    badge.className = 'sync-badge off';
+    label.textContent = 'Google 表單未連動（點⚙️設定）';
+  }
+}
+
+/* ── 儲存設定按鈕 ── */
+document.getElementById('cfg-save-btn').addEventListener('click', () => {
+  const cfg = {
+    url:      document.getElementById('cfg-url').value.trim(),
+    date:     document.getElementById('cfg-date').value.trim(),
+    weight:   document.getElementById('cfg-weight').value.trim(),
+    appetite: document.getElementById('cfg-appetite').value.trim(),
+    spirit:   document.getElementById('cfg-spirit').value.trim(),
+    litter:   document.getElementById('cfg-litter').value.trim(),
+    note:     document.getElementById('cfg-note').value.trim(),
+  };
+
+  const status = document.getElementById('cfg-status');
+
+  if (!cfg.url) {
+    status.textContent = '⚠️ 請填寫表單回應網址';
+    status.className = 's-status warn';
+    return;
+  }
+  if (!cfg.url.includes('formResponse')) {
+    status.textContent = '⚠️ 網址應包含 formResponse';
+    status.className = 's-status warn';
+    return;
+  }
+
+  saveConfig(cfg);
+  status.textContent = '✅ 設定已儲存至本機瀏覽器';
+  status.className = 's-status';
+  updateSyncBadge();
+  setTimeout(() => { status.textContent = ''; }, 3000);
+});
+
+/* ── 清除設定按鈕 ── */
+document.getElementById('cfg-clear-btn').addEventListener('click', () => {
+  if (!confirm('確定要清除已儲存的 Google 表單設定嗎？')) return;
+  localStorage.removeItem(CFG_KEY);
+  populateSettingsForm();
+  updateSyncBadge();
+  const status = document.getElementById('cfg-status');
+  status.textContent = '🗑 設定已清除';
+  status.className = 's-status warn';
+  setTimeout(() => { status.textContent = ''; }, 3000);
+});
+
+/* ── 齒輪開關 ── */
+document.getElementById('gear-btn').addEventListener('click', () => {
+  const drawer = document.getElementById('settings-drawer');
+  const btn    = document.getElementById('gear-btn');
+  const isOpen = drawer.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  if (isOpen) populateSettingsForm();
+});
+
+/* ══════════════════════════════════════════════
+   CORE STATE
+══════════════════════════════════════════════ */
+const selections = { appetite: '', spirit: '', litter: '' };
+let weightRange = 14;
+
+/* ── 初始化日期 ── */
+(function() {
+  const t = new Date();
+  const p = n => String(n).padStart(2,'0');
+  document.getElementById('rec-date').value =
+    `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())}`;
+})();
+
+/* ── 分頁切換 ── */
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+    if (tab.dataset.panel === 'panel-chart') renderAllCharts();
+  });
+});
+
+/* ── 狀態按鈕 ── */
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = btn.dataset.group;
+    document.querySelectorAll(`.toggle-btn[data-group="${g}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selections[g] = btn.dataset.value;
+  });
+});
+
+/* ── 範圍按鈕 ── */
+document.querySelectorAll('.range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    weightRange = parseInt(btn.dataset.range);
+    drawWeightChart();
+    drawWeightStats();
+  });
+});
+
+/* ══════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════ */
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ══════════════════════════════════════════════
+   LOCAL RECORDS
+══════════════════════════════════════════════ */
+const REC_KEY = 'cat_health_records';
+
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(REC_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveRecord(rec) {
+  const recs = loadRecords();
+  const idx = recs.findIndex(r => r.date === rec.date);
+  if (idx >= 0) recs[idx] = rec;
+  else recs.unshift(rec);
+  recs.sort((a,b) => b.date.localeCompare(a.date));
+  localStorage.setItem(REC_KEY, JSON.stringify(recs.slice(0,90)));
+}
+
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+function tagClass(v) { return v==='良好'?'good':v==='普通'?'mid':v==='不佳'?'bad':''; }
+function escHtml(s)  { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function getColor(v) { return v==='良好'?'#6BAE75':v==='普通'?'#E0A040':v==='不佳'?'#D96060':'#EADED4'; }
+
+/* ══════════════════════════════════════════════
+   HISTORY
+══════════════════════════════════════════════ */
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const recs = loadRecords();
+  if (!recs.length) {
+    list.innerHTML = '<p class="history-empty">尚無紀錄，快來記下第一筆吧 🐾</p>';
+    return;
+  }
+  list.innerHTML = recs.slice(0,20).map(r => `
+    <div class="history-item">
+      <div class="history-date">📅 ${r.date}</div>
+      <div class="history-row">
+        ${r.weight   ? `<span class="tag">⚖️ ${r.weight} g</span>` : ''}
+        ${r.appetite ? `<span class="tag ${tagClass(r.appetite)}">食慾 ${r.appetite}</span>` : ''}
+        ${r.spirit   ? `<span class="tag ${tagClass(r.spirit)}">精神 ${r.spirit}</span>` : ''}
+        ${r.litter   ? `<span class="tag ${tagClass(r.litter)}">排便 ${r.litter}</span>` : ''}
+      </div>
+      ${r.note ? `<div class="history-note">💬 ${escHtml(r.note)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════════
+   DANGER CHECK
+══════════════════════════════════════════════ */
+function checkDanger() {
+  const recs = loadRecords();
+  const warnings = [];
+
+  const withWeight = recs.filter(r => r.weight && parseFloat(r.weight) > 0);
+  if (withWeight.length >= 2) {
+    const recent = parseFloat(withWeight[0].weight);
+    const peak   = Math.max(...withWeight.slice(0,10).map(r => parseFloat(r.weight)));
+    const drop   = (peak - recent) / peak * 100;
+    if (drop >= 5) warnings.push(`⚖️ <strong>體重警示：</strong>近期體重較高峰下降 ${drop.toFixed(1)}%（${peak}g → ${recent}g），已超過 5% 警戒線。`);
+  }
+
+  const a5 = recs.slice(0,5).filter(r => r.appetite).map(r => r.appetite);
+  let aStreak = 0; for (const v of a5) { if (v==='不佳') aStreak++; else break; }
+  if (aStreak >= 2) warnings.push(`😿 <strong>食慾警示：</strong>已連續 ${aStreak} 天食慾不佳，請密切觀察並考慮諮詢獸醫。`);
+
+  const s5 = recs.slice(0,5).filter(r => r.spirit).map(r => r.spirit);
+  let sStreak = 0; for (const v of s5) { if (v==='不佳') sStreak++; else break; }
+  if (sStreak >= 3) warnings.push(`😾 <strong>精神警示：</strong>已連續 ${sStreak} 天精神不佳，建議盡速就診。`);
+
+  const el  = document.getElementById('danger-alert');
+  const txt = document.getElementById('danger-text');
+  if (warnings.length) { txt.innerHTML = warnings.join('<br>'); el.classList.add('show'); }
+  else el.classList.remove('show');
+}
+
+/* ══════════════════════════════════════════════
+   GOOGLE FORM SUBMIT（動態從 localStorage 讀取）
+══════════════════════════════════════════════ */
+function submitToGoogleForm(rec) {
+  const cfg = loadConfig();
+
+  // 若設定不完整，不送出（已在 submit handler 先攔截）
+  if (!cfg.url || !cfg.date) return;
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = cfg.url;
+  form.target = 'hidden-iframe';
+  form.style.display = 'none';
+
+  const addField = (name, value) => {
+    if (!name || value === undefined || value === null || value === '') return;
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = name; inp.value = value;
+    form.appendChild(inp);
+  };
+
+  // 日期拆年/月/日
+  const [year, month, day] = (rec.date || '').split('-');
+  addField(cfg.date + '_year',  year);
+  addField(cfg.date + '_month', month);
+  addField(cfg.date + '_day',   day);
+
+  addField(cfg.weight,   rec.weight);
+  addField(cfg.appetite, rec.appetite);
+  addField(cfg.spirit,   rec.spirit);
+  addField(cfg.litter,   rec.litter);
+  addField(cfg.note,     rec.note);
+
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(() => document.body.removeChild(form), 2000);
+}
+
+/* ══════════════════════════════════════════════
+   PREFILL FORM FOR DATE
+══════════════════════════════════════════════ */
+function prefillForDate(date) {
+  const recs     = loadRecords();
+  const existing = recs.find(r => r.date === date);
+  const btn      = document.getElementById('submit-btn');
+
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  selections.appetite = selections.spirit = selections.litter = '';
+
+  if (existing) {
+    document.getElementById('rec-weight').value = existing.weight || '';
+    document.getElementById('rec-note').value   = existing.note   || '';
+    ['appetite','spirit','litter'].forEach(f => {
+      const val = existing[f]; if (!val) return;
+      const b = document.querySelector(`.toggle-btn[data-group="${f}"][data-value="${val}"]`);
+      if (b) { b.classList.add('active'); selections[f] = val; }
+    });
+    btn.innerHTML = '<span>✏️</span> 更新今日紀錄';
+    btn.style.background = 'linear-gradient(135deg, #C4956A 0%, #9A6E42 100%)';
+  } else {
+    document.getElementById('rec-weight').value = '';
+    document.getElementById('rec-note').value   = '';
+    btn.innerHTML = '<span>🐾</span> 儲存今日紀錄';
+    btn.style.background = '';
+  }
+}
+
+document.getElementById('rec-date').addEventListener('change', e => prefillForDate(e.target.value));
+
+/* ══════════════════════════════════════════════
+   SUBMIT HANDLER
+══════════════════════════════════════════════ */
+document.getElementById('submit-btn').addEventListener('click', () => {
+  const date   = document.getElementById('rec-date').value.trim();
+  const weight = document.getElementById('rec-weight').value.trim();
+  const note   = document.getElementById('rec-note').value.trim();
+
+  if (!date) { showToast('⚠️ 請選擇日期', true); return; }
+  if (!selections.appetite && !selections.spirit && !selections.litter && !weight && !note) {
+    showToast('⚠️ 請至少填寫一項資料', true); return;
+  }
+
+  // 若未設定 Google 表單，提示但仍允許本機儲存
+  const cfgReady = isConfigReady();
+  if (!cfgReady) {
+    showToast('⚠️ 尚未設定 Google 表單，僅儲存於本機', true);
+  }
+
+  const recs     = loadRecords();
+  const isUpdate = recs.some(r => r.date === date);
+
+  const rec = {
+    date, weight,
+    appetite: selections.appetite,
+    spirit:   selections.spirit,
+    litter:   selections.litter,
+    note,
+    savedAt:  new Date().toISOString(),
+  };
+
+  saveRecord(rec);
+  if (cfgReady) submitToGoogleForm(rec);
+
+  renderHistory();
+  checkDanger();
+
+  if (cfgReady) {
+    showToast(isUpdate ? '✏️ 紀錄已更新並同步！' : '✅ 紀錄已儲存並同步！');
+  }
+
+  prefillForDate(date);
+});
+
+/* ══════════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════════ */
+function setupCanvas(id) {
+  const canvas = document.getElementById(id);
+  const dpr  = window.devicePixelRatio || 1;
+  const cssW = canvas.parentElement.getBoundingClientRect().width || 340;
+  const cssH = parseInt(canvas.getAttribute('height'));
+  canvas.width  = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width  = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w: cssW, h: cssH };
+}
+
+function drawWeightStats() {
+  const recs     = loadRecords();
+  const all      = recs.filter(r => r.weight && parseFloat(r.weight) > 0);
+  const cutoff   = weightRange > 0 ? new Date(Date.now() - weightRange*86400000).toISOString().slice(0,10) : '0000-00-00';
+  const filtered = weightRange > 0 ? all.filter(r => r.date >= cutoff) : all;
+  const container = document.getElementById('weight-stats');
+
+  if (!filtered.length) {
+    container.innerHTML = '<p style="color:#C4A88A;font-size:0.82rem">尚無體重資料</p>';
+    return;
+  }
+
+  const vals    = filtered.map(r => parseFloat(r.weight));
+  const latest  = vals[0];
+  const peak    = Math.max(...vals);
+  const drop    = (peak - latest) / peak * 100;
+  const trend   = vals.length >= 2 ? latest - vals[vals.length-1] : 0;
+  const trendStr = trend > 0 ? `+${trend}` : `${trend}`;
+
+  container.innerHTML = `
+    <div class="stat-box">
+      <div class="s-val">${latest.toLocaleString()}</div>
+      <div class="s-lbl">最新體重 (g)</div>
+    </div>
+    <div class="stat-box ${drop >= 5 ? 'warn' : 'ok'}">
+      <div class="s-val">${drop.toFixed(1)}%</div>
+      <div class="s-lbl">較峰值下降</div>
+    </div>
+    <div class="stat-box ${trend < -50 ? 'warn' : trend > 50 ? 'ok' : ''}">
+      <div class="s-val">${trendStr}</div>
+      <div class="s-lbl">區間變化 (g)</div>
+    </div>`;
+}
+
+function drawWeightChart() {
+  const { ctx, w, h } = setupCanvas('weight-chart');
+  const PAD = { t:16, r:12, b:36, l:52 };
+  const cw = w - PAD.l - PAD.r, ch = h - PAD.t - PAD.b;
+  ctx.clearRect(0, 0, w, h);
+
+  const recs   = loadRecords();
+  const all    = recs.filter(r => r.weight && parseFloat(r.weight) > 0).reverse();
+  const cutoff = weightRange > 0 ? new Date(Date.now() - weightRange*86400000).toISOString().slice(0,10) : '0000-00-00';
+  const data   = weightRange > 0 ? all.filter(r => r.date >= cutoff) : all;
+
+  if (!data.length) {
+    ctx.fillStyle = '#C4A88A'; ctx.font = '14px Noto Sans TC, sans-serif';
+    ctx.textAlign = 'center'; ctx.fillText('尚無體重紀錄', w/2, h/2);
+    return;
+  }
+
+  const vals   = data.map(r => parseFloat(r.weight));
+  const peak   = Math.max(...vals), minV = Math.min(...vals);
+  const pad    = Math.max((peak - minV) * 0.15, 50);
+  const yMax   = peak + pad, yMin = Math.max(0, minV - pad), yRange = yMax - yMin;
+
+  const xPos = i => PAD.l + (data.length===1 ? cw/2 : i/(data.length-1)*cw);
+  const yPos = v => PAD.t + ch - (v - yMin)/yRange*ch;
+
+  // grid
+  ctx.strokeStyle = '#F0E4D4'; ctx.lineWidth = 1;
+  for (let i=0; i<=4; i++) {
+    const y = PAD.t + i/4*ch;
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l+cw, y); ctx.stroke();
+    ctx.fillStyle='#C4A88A'; ctx.font='10px Noto Sans TC,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(Math.round(yMax - i/4*yRange), PAD.l-6, y+4);
+  }
+
+  // 5% warning band
+  const warnLevel = peak * 0.95;
+  if (warnLevel > yMin) {
+    const yW = yPos(warnLevel);
+    const grad = ctx.createLinearGradient(0, PAD.t, 0, yW);
+    grad.addColorStop(0,'rgba(217,96,96,0.10)'); grad.addColorStop(1,'rgba(217,96,96,0.02)');
+    ctx.fillStyle = grad; ctx.fillRect(PAD.l, PAD.t, cw, yW-PAD.t);
+    ctx.strokeStyle='rgba(217,96,96,0.45)'; ctx.setLineDash([5,4]); ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(PAD.l, yW); ctx.lineTo(PAD.l+cw, yW); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(185,60,60,0.75)'; ctx.font='9px Noto Sans TC,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('▼ 5%警戒', PAD.l+4, yW-3);
+  }
+
+  // area
+  if (data.length > 1) {
+    const g2 = ctx.createLinearGradient(0,PAD.t,0,PAD.t+ch);
+    g2.addColorStop(0,'rgba(196,149,106,0.28)'); g2.addColorStop(1,'rgba(196,149,106,0.00)');
+    ctx.fillStyle = g2; ctx.beginPath();
+    ctx.moveTo(xPos(0), yPos(vals[0]));
+    for (let i=1;i<data.length;i++) {
+      const mx=(xPos(i-1)+xPos(i))/2;
+      ctx.bezierCurveTo(mx,yPos(vals[i-1]),mx,yPos(vals[i]),xPos(i),yPos(vals[i]));
+    }
+    ctx.lineTo(xPos(data.length-1),PAD.t+ch); ctx.lineTo(xPos(0),PAD.t+ch);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // line
+  ctx.strokeStyle='#C4956A'; ctx.lineWidth=2.5; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(xPos(0), yPos(vals[0]));
+  for (let i=1;i<data.length;i++) {
+    const mx=(xPos(i-1)+xPos(i))/2;
+    ctx.bezierCurveTo(mx,yPos(vals[i-1]),mx,yPos(vals[i]),xPos(i),yPos(vals[i]));
+  }
+  ctx.stroke();
+
+  // dots
+  data.forEach((rec,i) => {
+    const drop=(peak-vals[i])/peak*100;
+    ctx.beginPath(); ctx.arc(xPos(i),yPos(vals[i]),5,0,Math.PI*2);
+    ctx.fillStyle = drop>=5?'#D96060':'#E8845A'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  });
+
+  // x labels
+  const step = Math.ceil(data.length/7);
+  ctx.fillStyle='#C4A88A'; ctx.font='9px Noto Sans TC,sans-serif'; ctx.textAlign='center';
+  data.forEach((r,i) => {
+    if (i%step===0||i===data.length-1) ctx.fillText(r.date.slice(5), xPos(i), PAD.t+ch+16);
+  });
+
+  // latest label bubble
+  const li=data.length-1, lx=xPos(li), ly=yPos(vals[li]);
+  const lbl=`${vals[li]}g`;
+  ctx.font='bold 11px Noto Sans TC,sans-serif'; ctx.textAlign='center';
+  const tw=ctx.measureText(lbl).width+10;
+  const tx=Math.min(Math.max(lx,PAD.l+tw/2),PAD.l+cw-tw/2);
+  ctx.fillStyle='rgba(61,43,31,0.82)';
+  ctx.beginPath(); ctx.roundRect(tx-tw/2,ly-22,tw,18,4); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fillText(lbl,tx,ly-9);
+}
+
+function drawHeatmap() {
+  const { ctx, w, h } = setupCanvas('heatmap-chart');
+  ctx.clearRect(0, 0, w, h);
+  const recs=loadRecords(), recMap={};
+  recs.forEach(r => { recMap[r.date]=r; });
+  const rows=['食慾','精神','排便'], fields=['appetite','spirit','litter'];
+  const days=30, LABEL_W=36;
+  const cellW=(w-LABEL_W)/days, cellH=(h-20)/rows.length;
+  const today=new Date();
+
+  ctx.fillStyle='#C4A88A'; ctx.font='9px Noto Sans TC,sans-serif'; ctx.textAlign='center';
+  for (let d=0;d<days;d++) {
+    if (d%5===0||d===days-1) {
+      const dt=new Date(today); dt.setDate(dt.getDate()-(days-1-d));
+      ctx.fillText(`${dt.getMonth()+1}/${dt.getDate()}`, LABEL_W+d*cellW+cellW/2, 10);
+    }
+  }
+
+  rows.forEach((row,ri) => {
+    ctx.fillStyle='#7A5C44'; ctx.font='bold 10px Noto Sans TC,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(row, LABEL_W/2, 20+ri*cellH+cellH/2+4);
+    for (let d=0;d<days;d++) {
+      const dt=new Date(today); dt.setDate(dt.getDate()-(days-1-d));
+      const key=dt.toISOString().slice(0,10);
+      const rec=recMap[key], val=rec?rec[fields[ri]]:'';
+      const x=LABEL_W+d*cellW+1, y=20+ri*cellH+1, cw2=cellW-2, ch2=cellH-2;
+      ctx.fillStyle=getColor(val);
+      ctx.beginPath(); ctx.roundRect(x,y,cw2,ch2,3); ctx.fill();
+      if (val==='不佳') {
+        ctx.strokeStyle='rgba(255,255,255,0.65)'; ctx.lineWidth=1.5;
+        const cx2=x+cw2/2,cy=y+ch2/2,s=Math.min(cw2,ch2)*0.22;
+        ctx.beginPath(); ctx.moveTo(cx2-s,cy-s); ctx.lineTo(cx2+s,cy+s);
+        ctx.moveTo(cx2+s,cy-s); ctx.lineTo(cx2-s,cy+s); ctx.stroke();
+      }
+      if (val==='良好') {
+        ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=1.5;
+        const cx2=x+cw2/2,cy=y+ch2/2,s=Math.min(cw2,ch2)*0.22;
+        ctx.beginPath(); ctx.moveTo(cx2-s,cy); ctx.lineTo(cx2-s*0.2,cy+s); ctx.lineTo(cx2+s,cy-s); ctx.stroke();
+      }
+    }
+  });
+}
+
+function drawBarChart() {
+  const { ctx, w, h } = setupCanvas('bar-chart');
+  const PAD={t:20,r:16,b:40,l:36};
+  const cw=w-PAD.l-PAD.r, ch=h-PAD.t-PAD.b;
+  ctx.clearRect(0,0,w,h);
+  const recs=loadRecords(), WEEKS=4;
+  const labels=[], ab=[], sb=[], lb=[];
+
+  for (let wk=WEEKS-1;wk>=0;wk--) {
+    const ws=new Date(Date.now()-(wk+1)*7*86400000);
+    const we=new Date(Date.now()-wk*7*86400000);
+    const wr=recs.filter(r=>{const d=new Date(r.date);return d>=ws&&d<we;});
+    labels.push(`${ws.getMonth()+1}/${ws.getDate()}`);
+    ab.push(wr.filter(r=>r.appetite==='不佳').length);
+    sb.push(wr.filter(r=>r.spirit==='不佳').length);
+    lb.push(wr.filter(r=>r.litter==='不佳').length);
+  }
+
+  const maxVal=Math.max(7,...ab,...sb,...lb);
+  const groupW=cw/WEEKS, barW=Math.min(groupW*0.2,16), gap=(groupW-3*barW)/2;
+  ctx.strokeStyle='#F0E4D4'; ctx.lineWidth=1;
+  for (let i=0;i<=4;i++) {
+    const y=PAD.t+i/4*ch;
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+cw,y); ctx.stroke();
+    ctx.fillStyle='#C4A88A'; ctx.font='9px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(Math.round(maxVal*(1-i/4)),PAD.l-4,y+3);
+  }
+
+  const colors=['#6BAE75','#E8845A','#9B7DC8'];
+  [ab,sb,lb].forEach((data,si) => {
+    data.forEach((val,gi) => {
+      const barH=val/maxVal*ch;
+      const x=PAD.l+gi*groupW+gap+si*barW, y=PAD.t+ch-barH;
+      ctx.fillStyle=colors[si];
+      ctx.beginPath(); ctx.roundRect(x,y,barW-2,barH,[3,3,0,0]); ctx.fill();
+      if (val>0) {
+        ctx.fillStyle='#3D2B1F'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+        ctx.fillText(val,x+(barW-2)/2,y-3);
+      }
+    });
+  });
+
+  ctx.fillStyle='#7A5C44'; ctx.font='10px Noto Sans TC,sans-serif'; ctx.textAlign='center';
+  labels.forEach((l,i)=>ctx.fillText(l,PAD.l+i*groupW+groupW/2,PAD.t+ch+16));
+
+  const sLabels=['食慾不佳','精神不佳','排便不佳'];
+  const legY=PAD.t+ch+30; let legX=(w-240)/2;
+  sLabels.forEach((l,i)=>{
+    ctx.fillStyle=colors[i]; ctx.fillRect(legX,legY-8,10,10);
+    ctx.fillStyle='#7A5C44'; ctx.font='9px Noto Sans TC,sans-serif'; ctx.textAlign='left';
+    ctx.fillText(l,legX+13,legY); legX+=ctx.measureText(l).width+30;
+  });
+}
+
+function renderAllCharts() {
+  drawWeightStats(); drawWeightChart(); drawHeatmap(); drawBarChart();
+}
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+prefillForDate(document.getElementById('rec-date').value);
+renderHistory();
+checkDanger();
+updateSyncBadge();
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (document.getElementById('panel-chart').classList.contains('active')) renderAllCharts();
+  }, 200);
+});
+</script>
+</body>
+</html>
