@@ -435,7 +435,7 @@
         <button class="range-btn" data-range="0">全部</button>
       </div>
       <div class="stat-row" id="weight-stats"></div>
-      <div class="chart-wrap"><canvas id="weight-chart" height="200"></canvas></div>
+      <div class="chart-wrap"><canvas id="weight-chart"></canvas></div>
       <p style="font-size:0.72rem;color:#C4A88A;margin-top:8px;text-align:center;">紅色警示帶 = 相較最高點下降 ≥ 5%</p>
     </div>
     <div class="card">
@@ -446,11 +446,11 @@
         <div class="hm-swatch" style="background:#D96060;margin-left:8px"></div>不佳
         <div class="hm-swatch" style="background:#EADED4;margin-left:8px"></div>無紀錄
       </div>
-      <div class="chart-wrap"><canvas id="heatmap-chart" height="130"></canvas></div>
+      <div class="chart-wrap"><canvas id="heatmap-chart"></canvas></div>
     </div>
     <div class="card">
       <div class="card-title">📈 狀態週統計（近 4 週）</div>
-      <div class="chart-wrap"><canvas id="bar-chart" height="200"></canvas></div>
+      <div class="chart-wrap"><canvas id="bar-chart"></canvas></div>
       <p style="font-size:0.72rem;color:#C4A88A;margin-top:8px;text-align:center;">每週「不佳」次數，連續升高請留意</p>
     </div>
   </div>
@@ -656,7 +656,10 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.panel).classList.add('active');
-    if (tab.dataset.panel === 'panel-chart') renderAllCharts();
+    // rAF：等瀏覽器完成 layout（面板變 display:block）再測量寬度畫圖
+    if (tab.dataset.panel === 'panel-chart') {
+      requestAnimationFrame(() => requestAnimationFrame(renderAllCharts));
+    }
   });
 });
 
@@ -802,13 +805,39 @@ function renderHistory() {
 }
 
 /* ══════════════════════════════════════════════
-   CHARTS
+   CHARTS  —  RWD-safe
 ══════════════════════════════════════════════ */
 function setupCanvas(id) {
-  const c=document.getElementById(id), dpr=window.devicePixelRatio||1;
-  const cssW=c.parentElement.getBoundingClientRect().width||340, cssH=parseInt(c.getAttribute('height'));
-  c.width=cssW*dpr; c.height=cssH*dpr; c.style.width=cssW+'px'; c.style.height=cssH+'px';
-  const ctx=c.getContext('2d'); ctx.scale(dpr,dpr); return {ctx,w:cssW,h:cssH};
+  const c   = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+
+  // 若面板被 display:none，getBoundingClientRect 會回傳 0
+  // 改從 .card-wrap > .card 或 main 取寬度
+  let cssW = c.parentElement.getBoundingClientRect().width;
+  if (!cssW) {
+    const main = document.querySelector('main');
+    const mainW = main ? main.getBoundingClientRect().width : 0;
+    cssW = mainW ? mainW - 40 : window.innerWidth - 48;
+  }
+  cssW = Math.floor(Math.max(cssW, 260));
+
+  // 高度：熱力圖依列數動態，其餘 45% 寬度（手機/桌機自適應）
+  let cssH;
+  if (id === 'heatmap-chart') {
+    const rowH = cssW < 380 ? 32 : 38;
+    cssH = 22 + rowH * 3;           // 日期列 + 3 資料列
+  } else {
+    cssH = Math.round(Math.min(Math.max(cssW * 0.46, 170), 250));
+  }
+
+  c.width        = cssW * dpr;
+  c.height       = cssH * dpr;
+  c.style.width  = cssW + 'px';
+  c.style.height = cssH + 'px';
+
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w: cssW, h: cssH };
 }
 
 function drawWeightStats() {
@@ -893,13 +922,24 @@ updateSyncBadge();
 // 有設定就自動從雲端拉一次最新資料
 if (isReady()) pullFromCloud();
 
+// ResizeObserver：偵測容器實際尺寸變化（比 window resize 更準確）
 let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (document.getElementById('panel-chart').classList.contains('active')) renderAllCharts();
-  }, 200);
-});
+const chartPanel = document.getElementById('panel-chart');
+if (window.ResizeObserver) {
+  new ResizeObserver(() => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (chartPanel.classList.contains('active')) renderAllCharts();
+    }, 120);
+  }).observe(document.querySelector('main'));
+} else {
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (chartPanel.classList.contains('active')) renderAllCharts();
+    }, 200);
+  });
+}
 </script>
 </body>
 </html>
