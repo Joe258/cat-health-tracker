@@ -101,7 +101,6 @@
     }
     .s-input:focus { border-color: #C4956A; }
     .s-input::placeholder { color: #6A4830; }
-    .s-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .s-save-btn {
       width: 100%; background: linear-gradient(135deg, #C4956A, #9A6E42);
       color: #fff; border: none; border-radius: 10px; padding: 12px;
@@ -195,9 +194,9 @@
       transition: border-color 0.2s; outline: none; -webkit-appearance: none;
     }
     input[type="date"]:focus, input[type="number"]:focus, textarea:focus { border-color: var(--orange); background: #fff; }
-    .weight-wrap { position: relative; }
-    .weight-wrap input { padding-right: 50px; }
-    .weight-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.88rem; font-weight: 700; color: var(--caramel); pointer-events: none; }
+    .weight-wrap, .vomit-wrap { position: relative; }
+    .weight-wrap input, .vomit-wrap input { padding-right: 50px; }
+    .weight-unit, .vomit-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.88rem; font-weight: 700; color: var(--caramel); pointer-events: none; }
     textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
     .field-wrap { margin-bottom: 18px; }
     .field-wrap:last-child { margin-bottom: 0; }
@@ -414,6 +413,20 @@
         </div>
       </div>
       <div class="field-wrap">
+        <label class="field-label" for="rec-vomit">嘔吐次數</label>
+        <div class="vomit-wrap">
+          <input type="number" id="rec-vomit" placeholder="0" min="0" step="1" inputmode="numeric" />
+          <span class="vomit-unit">次</span>
+        </div>
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">貼貼（撒嬌互動）</label>
+        <div class="toggle-group" data-group="cuddle">
+          <button class="toggle-btn good" data-value="有" data-group="cuddle" type="button"><span class="btn-emoji">🥰</span>有</button>
+          <button class="toggle-btn bad"  data-value="沒有" data-group="cuddle" type="button"><span class="btn-emoji">😶</span>沒有</button>
+        </div>
+      </div>
+      <div class="field-wrap">
         <label class="field-label" for="rec-note">備忘錄</label>
         <textarea id="rec-note" placeholder="今天有沒有特別的事情？例如：就診、換糧、行為異常…"></textarea>
       </div>
@@ -446,12 +459,25 @@
         <div class="hm-swatch" style="background:#D96060;margin-left:8px"></div>不佳
         <div class="hm-swatch" style="background:#EADED4;margin-left:8px"></div>無紀錄
       </div>
+      <div class="hm-legend" style="margin-top:4px;">
+        <span style="font-size:0.7rem;color:var(--brown-lt);margin-right:4px;">嘔吐：</span>
+        <div class="hm-swatch" style="background:#F5C18A"></div>1次
+        <div class="hm-swatch" style="background:#E8845A;margin-left:6px"></div>2次
+        <div class="hm-swatch" style="background:#D96060;margin-left:6px"></div>3+次
+        <div class="hm-swatch" style="background:#EADED4;margin-left:6px"></div>0次
+      </div>
       <div class="chart-wrap"><canvas id="heatmap-chart"></canvas></div>
     </div>
     <div class="card">
       <div class="card-title">📈 狀態週統計（近 4 週）</div>
       <div class="chart-wrap"><canvas id="bar-chart"></canvas></div>
       <p style="font-size:0.72rem;color:#C4A88A;margin-top:8px;text-align:center;">每週「不佳」次數，連續升高請留意</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🤢 嘔吐趨勢（近 30 天）</div>
+      <div class="stat-row" id="vomit-stats"></div>
+      <div class="chart-wrap"><canvas id="vomit-chart"></canvas></div>
+      <p style="font-size:0.72rem;color:#C4A88A;margin-top:8px;text-align:center;">橘點 = 有嘔吐，紅點 ≥ 3 次，灰點 = 無紀錄</p>
     </div>
   </div>
 
@@ -484,6 +510,24 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ── roundRect polyfill for older browsers ── */
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    const R = Math.min(typeof r === 'number' ? r : (Array.isArray(r) ? r[0] : 0), w/2, h/2);
+    this.moveTo(x + R, y);
+    this.lineTo(x + w - R, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + R);
+    this.lineTo(x + w, y + h - R);
+    this.quadraticCurveTo(x + w, y + h, x + w - R, y + h);
+    this.lineTo(x + R, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - R);
+    this.lineTo(x, y + R);
+    this.quadraticCurveTo(x, y, x + R, y);
+    this.closePath();
+    return this;
+  };
+}
+
 /* ══════════════════════════════════════════════
    CONFIG  —  localStorage，無硬碼
 ══════════════════════════════════════════════ */
@@ -587,6 +631,10 @@ function upsertLocal(rec) {
 ══════════════════════════════════════════════ */
 async function pullFromCloud() {
   if (!isReady()) return;
+  if (!navigator.onLine) {
+    showToast('📵 目前離線，使用本機暫存資料', 'error');
+    return;
+  }
   const { url, userKey } = loadConfig();
   updateSyncBadge('syncing');
   try {
@@ -608,6 +656,7 @@ async function pullFromCloud() {
 
 async function pushToCloud(rec) {
   if (!isReady()) return false;
+  if (!navigator.onLine) return false;
   const { url, userKey } = loadConfig();
   try {
     const res  = await fetch(url, {
@@ -640,7 +689,7 @@ function showToast(msg, type='') {
 /* ══════════════════════════════════════════════
    STATE
 ══════════════════════════════════════════════ */
-const sel = { appetite:'', spirit:'', litter:'' };
+const sel = { appetite:'', spirit:'', litter:'', cuddle:'' };
 let weightRange = 14;
 
 /* ── 初始化日期 ── */
@@ -690,11 +739,12 @@ function prefillForDate(date) {
   const existing = loadRecords().find(r => r.date === date);
   const btn = document.getElementById('submit-btn');
   document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-  sel.appetite = sel.spirit = sel.litter = '';
+  sel.appetite = sel.spirit = sel.litter = sel.cuddle = '';
   if (existing) {
     document.getElementById('rec-weight').value = existing.weight || '';
+    document.getElementById('rec-vomit').value  = existing.vomit  || '';
     document.getElementById('rec-note').value   = existing.note   || '';
-    ['appetite','spirit','litter'].forEach(f => {
+    ['appetite','spirit','litter','cuddle'].forEach(f => {
       const val = existing[f]; if (!val) return;
       const b = document.querySelector(`.toggle-btn[data-group="${f}"][data-value="${val}"]`);
       if (b) { b.classList.add('active'); sel[f] = val; }
@@ -703,6 +753,7 @@ function prefillForDate(date) {
     btn.style.background = 'linear-gradient(135deg,#C4956A,#9A6E42)';
   } else {
     document.getElementById('rec-weight').value = '';
+    document.getElementById('rec-vomit').value  = '';
     document.getElementById('rec-note').value   = '';
     btn.innerHTML = '<span>🐾</span> 儲存今日紀錄';
     btn.style.background = '';
@@ -716,17 +767,19 @@ document.getElementById('rec-date').addEventListener('change', e => prefillForDa
 document.getElementById('submit-btn').addEventListener('click', async () => {
   const date   = document.getElementById('rec-date').value.trim();
   const weight = document.getElementById('rec-weight').value.trim();
+  const vomit  = document.getElementById('rec-vomit').value.trim();
   const note   = document.getElementById('rec-note').value.trim();
 
   if (!date) { showToast('⚠️ 請選擇日期', 'error'); return; }
-  if (!sel.appetite && !sel.spirit && !sel.litter && !weight && !note) {
+  if (!sel.appetite && !sel.spirit && !sel.litter && !sel.cuddle && !weight && !vomit && !note) {
     showToast('⚠️ 請至少填寫一項資料', 'error'); return;
   }
 
   const isUpdate = loadRecords().some(r => r.date === date);
   const rec = {
     date, weight,
-    appetite: sel.appetite, spirit: sel.spirit, litter: sel.litter, note,
+    appetite: sel.appetite, spirit: sel.spirit, litter: sel.litter,
+    vomit, cuddle: sel.cuddle, note,
     savedAt: new Date().toISOString(),
   };
 
@@ -799,6 +852,8 @@ function renderHistory() {
         ${r.appetite ?`<span class="tag ${tagClass(r.appetite)}">食慾 ${r.appetite}</span>`:''}
         ${r.spirit   ?`<span class="tag ${tagClass(r.spirit)}">精神 ${r.spirit}</span>`:''}
         ${r.litter   ?`<span class="tag ${tagClass(r.litter)}">排便 ${r.litter}</span>`:''}
+        ${r.vomit && r.vomit!=='0' ?`<span class="tag bad">嘔吐 ${r.vomit} 次</span>`:''}
+        ${r.cuddle  ?`<span class="tag ${r.cuddle==='有'?'good':''}">貼貼 ${r.cuddle}</span>`:''}
       </div>
       ${r.note?`<div class="history-note">💬 ${escHtml(r.note)}</div>`:''}
     </div>`).join('');
@@ -825,7 +880,7 @@ function setupCanvas(id) {
   let cssH;
   if (id === 'heatmap-chart') {
     const rowH = cssW < 380 ? 32 : 38;
-    cssH = 22 + rowH * 3;           // 日期列 + 3 資料列
+    cssH = 22 + rowH * 4;           // 日期列 + 4 資料列
   } else {
     cssH = Math.round(Math.min(Math.max(cssW * 0.46, 170), 250));
   }
@@ -885,17 +940,42 @@ function drawWeightChart() {
   const li=data.length-1,lx=xPos(li),ly=yPos(vals[li]),lbl=`${vals[li]}g`;ctx.font='bold 11px Noto Sans TC,sans-serif';ctx.textAlign='center';const tw=ctx.measureText(lbl).width+10,tx=Math.min(Math.max(lx,PAD.l+tw/2),PAD.l+cw-tw/2);ctx.fillStyle='rgba(61,43,31,0.82)';ctx.beginPath();ctx.roundRect(tx-tw/2,ly-22,tw,18,4);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(lbl,tx,ly-9);
 }
 
+function vomitColor(val) {
+  const n = parseInt(val) || 0;
+  if (n === 0) return '#EADED4';   // 0 次：灰（無資料同色）
+  if (n === 1) return '#F5C18A';   // 1 次：淡橘
+  if (n === 2) return '#E8845A';   // 2 次：橘
+  return '#D96060';                // 3+ 次：紅
+}
+
 function drawHeatmap() {
   const {ctx,w,h}=setupCanvas('heatmap-chart');ctx.clearRect(0,0,w,h);
   const recs=loadRecords(),rm={};recs.forEach(r=>{rm[r.date]=r;});
-  const rows=['食慾','精神','排便'],fields=['appetite','spirit','litter'],days=30,LW=36;
+  const rows=['食慾','精神','排便','嘔吐'],fields=['appetite','spirit','litter','vomit'],days=30,LW=38;
   const cellW=(w-LW)/days,cellH=(h-20)/rows.length,today=new Date();
-  ctx.fillStyle='#C4A88A';ctx.font='9px Noto Sans TC,sans-serif';ctx.textAlign='center';
+  const dateFontSize=cellW<10?7:cellW<14?8:9;
+  ctx.fillStyle='#C4A88A';ctx.font=`${dateFontSize}px Noto Sans TC,sans-serif`;ctx.textAlign='center';
   for(let d=0;d<days;d++){if(d%5===0||d===days-1){const dt=new Date(today);dt.setDate(dt.getDate()-(days-1-d));ctx.fillText(`${dt.getMonth()+1}/${dt.getDate()}`,LW+d*cellW+cellW/2,10);}}
-  rows.forEach((row,ri)=>{ctx.fillStyle='#7A5C44';ctx.font='bold 10px Noto Sans TC,sans-serif';ctx.textAlign='center';ctx.fillText(row,LW/2,20+ri*cellH+cellH/2+4);
-    for(let d=0;d<days;d++){const dt=new Date(today);dt.setDate(dt.getDate()-(days-1-d));const key=dt.toISOString().slice(0,10),rec=rm[key],val=rec?rec[fields[ri]]:'';const x=LW+d*cellW+1,y=20+ri*cellH+1,cw2=cellW-2,ch2=cellH-2;ctx.fillStyle=getColor(val);ctx.beginPath();ctx.roundRect(x,y,cw2,ch2,3);ctx.fill();
-      if(val==='不佳'){ctx.strokeStyle='rgba(255,255,255,0.65)';ctx.lineWidth=1.5;const cx=x+cw2/2,cy=y+ch2/2,s=Math.min(cw2,ch2)*0.22;ctx.beginPath();ctx.moveTo(cx-s,cy-s);ctx.lineTo(cx+s,cy+s);ctx.moveTo(cx+s,cy-s);ctx.lineTo(cx-s,cy+s);ctx.stroke();}
-      if(val==='良好'){ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1.5;const cx=x+cw2/2,cy=y+ch2/2,s=Math.min(cw2,ch2)*0.22;ctx.beginPath();ctx.moveTo(cx-s,cy);ctx.lineTo(cx-s*0.2,cy+s);ctx.lineTo(cx+s,cy-s);ctx.stroke();}}});
+  rows.forEach((row,ri)=>{
+    const isVomit = fields[ri]==='vomit';
+    ctx.fillStyle='#7A5C44';ctx.font='bold 10px Noto Sans TC,sans-serif';ctx.textAlign='center';
+    ctx.fillText(row,LW/2,20+ri*cellH+cellH/2+4);
+    for(let d=0;d<days;d++){
+      const dt=new Date(today);dt.setDate(dt.getDate()-(days-1-d));
+      const key=dt.toISOString().slice(0,10),rec=rm[key],val=rec?rec[fields[ri]]:'';
+      const x=LW+d*cellW+1,y=20+ri*cellH+1,cw2=cellW-2,ch2=cellH-2;
+      ctx.fillStyle = isVomit ? (rec ? vomitColor(val) : '#EADED4') : getColor(val);
+      ctx.beginPath();ctx.roundRect(x,y,cw2,ch2,3);ctx.fill();
+      if(!isVomit){
+        if(val==='不佳'){ctx.strokeStyle='rgba(255,255,255,0.65)';ctx.lineWidth=1.5;const cx=x+cw2/2,cy=y+ch2/2,s=Math.min(cw2,ch2)*0.22;ctx.beginPath();ctx.moveTo(cx-s,cy-s);ctx.lineTo(cx+s,cy+s);ctx.moveTo(cx+s,cy-s);ctx.lineTo(cx-s,cy+s);ctx.stroke();}
+        if(val==='良好'){ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1.5;const cx=x+cw2/2,cy=y+ch2/2,s=Math.min(cw2,ch2)*0.22;ctx.beginPath();ctx.moveTo(cx-s,cy);ctx.lineTo(cx-s*0.2,cy+s);ctx.lineTo(cx+s,cy-s);ctx.stroke();}
+      } else {
+        // 嘔吐列：顯示次數文字（>0才顯示）
+        const n=parseInt(val)||0;
+        if(n>0&&cw2>8){ctx.fillStyle='rgba(255,255,255,0.9)';ctx.font=`bold ${Math.min(cw2*0.7,10)}px sans-serif`;ctx.textAlign='center';ctx.fillText(n,x+cw2/2,y+ch2/2+3);}
+      }
+    }
+  });
 }
 
 function drawBarChart() {
@@ -906,10 +986,102 @@ function drawBarChart() {
   ctx.strokeStyle='#F0E4D4';ctx.lineWidth=1;for(let i=0;i<=4;i++){const y=PAD.t+i/4*ch;ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+cw,y);ctx.stroke();ctx.fillStyle='#C4A88A';ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillText(Math.round(maxVal*(1-i/4)),PAD.l-4,y+3);}
   const colors=['#6BAE75','#E8845A','#9B7DC8'];[ab,sb,lb].forEach((data,si)=>{data.forEach((val,gi)=>{const barH=val/maxVal*ch,x=PAD.l+gi*groupW+gap+si*barW,y=PAD.t+ch-barH;ctx.fillStyle=colors[si];ctx.beginPath();ctx.roundRect(x,y,barW-2,barH,[3,3,0,0]);ctx.fill();if(val>0){ctx.fillStyle='#3D2B1F';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText(val,x+(barW-2)/2,y-3);}});});
   ctx.fillStyle='#7A5C44';ctx.font='10px Noto Sans TC,sans-serif';ctx.textAlign='center';labels.forEach((l,i)=>ctx.fillText(l,PAD.l+i*groupW+groupW/2,PAD.t+ch+16));
-  const sL=['食慾不佳','精神不佳','排便不佳'];let legX=(w-240)/2;const legY=PAD.t+ch+30;sL.forEach((l,i)=>{ctx.fillStyle=colors[i];ctx.fillRect(legX,legY-8,10,10);ctx.fillStyle='#7A5C44';ctx.font='9px Noto Sans TC,sans-serif';ctx.textAlign='left';ctx.fillText(l,legX+13,legY);legX+=ctx.measureText(l).width+30;});
+  // 圖例：動態居中，防止在窄螢幕負數跑版
+  const sL=['食慾不佳','精神不佳','排便不佳'];const legY=PAD.t+ch+30;ctx.font='9px Noto Sans TC,sans-serif';const totalLegW=sL.reduce((s,l)=>s+ctx.measureText(l).width+26,0);let legX=Math.max(PAD.l,(w-totalLegW)/2);sL.forEach((l,i)=>{ctx.fillStyle=colors[i];ctx.fillRect(legX,legY-8,10,10);ctx.fillStyle='#7A5C44';ctx.textAlign='left';ctx.fillText(l,legX+13,legY);legX+=ctx.measureText(l).width+26;});
 }
 
-function renderAllCharts() { drawWeightStats(); drawWeightChart(); drawHeatmap(); drawBarChart(); }
+function drawVomitStats() {
+  const recs = loadRecords();
+  const co = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+  const recent = recs.filter(r=>r.date>=co && r.vomit!==undefined && r.vomit!=='');
+  const el = document.getElementById('vomit-stats');
+  if(!recent.length){el.innerHTML='<p style="color:#C4A88A;font-size:0.82rem">尚無嘔吐紀錄</p>';return;}
+  const total = recent.reduce((s,r)=>s+(parseInt(r.vomit)||0),0);
+  const days  = recent.filter(r=>(parseInt(r.vomit)||0)>0).length;
+  const maxV  = Math.max(...recent.map(r=>parseInt(r.vomit)||0));
+  el.innerHTML=`
+    <div class="stat-box ${total>=5?'warn':''}"><div class="s-val">${total}</div><div class="s-lbl">30天總次數</div></div>
+    <div class="stat-box ${days>=3?'warn':''}"><div class="s-val">${days}</div><div class="s-lbl">有嘔吐天數</div></div>
+    <div class="stat-box ${maxV>=3?'warn':'ok'}"><div class="s-val">${maxV}</div><div class="s-lbl">單日最高次</div></div>`;
+}
+
+function drawVomitChart() {
+  const {ctx,w,h}=setupCanvas('vomit-chart');
+  const PAD={t:16,r:12,b:36,l:36}, cw=w-PAD.l-PAD.r, ch=h-PAD.t-PAD.b;
+  ctx.clearRect(0,0,w,h);
+
+  // 建立近 30 天連續日期陣列
+  const recs=loadRecords(), rm={};
+  recs.forEach(r=>{ rm[r.date]=r; });
+  const today=new Date(), data=[];
+  for(let i=29;i>=0;i--){
+    const dt=new Date(today); dt.setDate(dt.getDate()-i);
+    const key=dt.toISOString().slice(0,10);
+    const rec=rm[key];
+    data.push({ date:key, val: rec&&rec.vomit!==''&&rec.vomit!==undefined ? parseInt(rec.vomit)||0 : null, hasRec:!!rec });
+  }
+
+  const recorded = data.filter(d=>d.val!==null);
+  if(!recorded.length){
+    ctx.fillStyle='#C4A88A';ctx.font='14px Noto Sans TC,sans-serif';ctx.textAlign='center';
+    ctx.fillText('尚無嘔吐紀錄',w/2,h/2);return;
+  }
+
+  const maxVal = Math.max(3, ...recorded.map(d=>d.val));
+  const xPos = i => PAD.l + i/(data.length-1)*cw;
+  const yPos = v => PAD.t + ch - (v/maxVal)*ch;
+
+  // grid
+  ctx.strokeStyle='#F0E4D4';ctx.lineWidth=1;
+  for(let i=0;i<=maxVal;i++){
+    const y=yPos(i);
+    ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+cw,y);ctx.stroke();
+    ctx.fillStyle='#C4A88A';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(i,PAD.l-4,y+3);
+  }
+
+  // 危險線（≥3次）
+  if(maxVal>=3){
+    const yDanger=yPos(3);
+    ctx.strokeStyle='rgba(217,96,96,0.4)';ctx.setLineDash([4,3]);ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(PAD.l,yDanger);ctx.lineTo(PAD.l+cw,yDanger);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(185,60,60,0.65)';ctx.font='8px sans-serif';ctx.textAlign='left';
+    ctx.fillText('▶ 3次警戒',PAD.l+2,yDanger-3);
+  }
+
+  // 柱狀 + 點
+  data.forEach((d,i)=>{
+    if(d.val===null) return;
+    const x=xPos(i), barW=Math.max(cw/data.length*0.55,4);
+    // bar
+    if(d.val>0){
+      const barH=(d.val/maxVal)*ch;
+      const barColor=d.val>=3?'rgba(217,96,96,0.35)':d.val>=2?'rgba(232,132,90,0.35)':'rgba(224,160,64,0.28)';
+      ctx.fillStyle=barColor;
+      ctx.fillRect(x-barW/2, yPos(d.val), barW, barH);
+    }
+    // dot
+    ctx.beginPath();ctx.arc(x,d.val>0?yPos(d.val):yPos(0),d.val>0?5:3.5,0,Math.PI*2);
+    ctx.fillStyle=d.val>=3?'#D96060':d.val>=1?'#E8845A':'#C4A88A';
+    ctx.fill();
+    if(d.val>0){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
+    // value label
+    if(d.val>=2){
+      ctx.fillStyle='#3D2B1F';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+      ctx.fillText(d.val,x,yPos(d.val)-7);
+    }
+  });
+
+  // x labels（每 5 天）
+  const step=Math.ceil(data.length/6);
+  ctx.fillStyle='#C4A88A';ctx.font='9px Noto Sans TC,sans-serif';ctx.textAlign='center';
+  data.forEach((d,i)=>{
+    if(i%step===0||i===data.length-1) ctx.fillText(d.date.slice(5),xPos(i),PAD.t+ch+16);
+  });
+}
+
+function renderAllCharts() { drawWeightStats(); drawWeightChart(); drawHeatmap(); drawBarChart(); drawVomitStats(); drawVomitChart(); }
 
 /* ══════════════════════════════════════════════
    INIT
