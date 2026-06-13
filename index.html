@@ -72,7 +72,7 @@
       overflow: hidden; max-height: 0;
       transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1);
     }
-    .settings-drawer.open { max-height: 600px; }
+    .settings-drawer.open { max-height: 800px; }
     .settings-inner {
       background: #2C1D13;
       padding: 20px 18px 22px;
@@ -643,7 +643,10 @@ async function pullFromCloud() {
     if (data.ok && Array.isArray(data.records)) {
       cacheRecords(data.records);
       renderHistory();
-      renderAllCharts();
+      // 只在圖表頁 active 時才畫，避免 canvas 寬度為 0
+      if (document.getElementById('panel-chart').classList.contains('active')) {
+        requestAnimationFrame(() => requestAnimationFrame(renderAllCharts));
+      }
       showToast(`☁️ 已同步 ${data.records.length} 筆紀錄`);
     } else {
       showToast('⚠️ 同步失敗：' + (data.error || '未知錯誤'), 'error');
@@ -829,6 +832,11 @@ function checkDanger() {
   const s5=recs.slice(0,5).filter(r=>r.spirit).map(r=>r.spirit);
   let ss=0; for(const v of s5){if(v==='不佳')ss++;else break;}
   if(ss>=3) warnings.push(`😾 <strong>精神警示：</strong>連續 ${ss} 天精神不佳，建議就診。`);
+  // 嘔吐：近 3 天有 ≥2 天次數 ≥3 次
+  const v3 = recs.slice(0,3).filter(r => r.vomit !== undefined && r.vomit !== '');
+  const highVomitDays = v3.filter(r => (parseInt(r.vomit)||0) >= 3).length;
+  if (highVomitDays >= 2) warnings.push(`🤢 <strong>嘔吐警示：</strong>近 3 天內有 ${highVomitDays} 天單日嘔吐 ≥3 次，建議盡速就診。`);
+
   const el=document.getElementById('danger-alert'), tx=document.getElementById('danger-text');
   if(warnings.length){tx.innerHTML=warnings.join('<br>');el.classList.add('show');}
   else el.classList.remove('show');
@@ -1002,7 +1010,7 @@ function drawVomitStats() {
   el.innerHTML=`
     <div class="stat-box ${total>=5?'warn':''}"><div class="s-val">${total}</div><div class="s-lbl">30天總次數</div></div>
     <div class="stat-box ${days>=3?'warn':''}"><div class="s-val">${days}</div><div class="s-lbl">有嘔吐天數</div></div>
-    <div class="stat-box ${maxV>=3?'warn':'ok'}"><div class="s-val">${maxV}</div><div class="s-lbl">單日最高次</div></div>`;
+    <div class="stat-box ${maxV>=3?'warn':maxV===0?'':'ok'}"><div class="s-val">${maxV}</div><div class="s-lbl">單日最高次</div></div>`;
 }
 
 function drawVomitChart() {
